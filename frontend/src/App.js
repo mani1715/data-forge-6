@@ -100,7 +100,7 @@ function App() {
                 </h1>
                 <p className="hero-subtitle">
                   Professional enterprise-grade data cleaning powered by advanced AI algorithms.
-                  Clean, validate, and optimize datasets up to 500MB in seconds.
+                  Clean, validate, and optimize your datasets in seconds.
                 </p>
                 <div className="hero-actions">
                   <button className="btn btn-primary" onClick={handleGetStarted} data-testid="get-started-btn">
@@ -157,7 +157,7 @@ function App() {
                 </div>
                 <h3 className="feature-title">Lightning Fast</h3>
                 <p className="feature-description">
-                  Process massive datasets up to 500MB in seconds with our optimized parallel processing engine.
+                  Process massive datasets in seconds with our optimized parallel processing engine.
                 </p>
               </div>
               <div className="feature-card" data-testid="feature-quality">
@@ -214,7 +214,7 @@ function App() {
                   to focus on what matters most - extracting valuable insights and driving business decisions.
                 </p>
                 <p>
-                  With support for datasets up to 500MB, multiple cleaning strategies, and real-time quality assessment, 
+                  With support for large datasets, multiple cleaning strategies, and real-time quality assessment, 
                   DataForge handles everything from small CSV files to massive enterprise data warehouses.
                 </p>
               </div>
@@ -263,7 +263,7 @@ function App() {
                 <div className="step-content">
                   <h3>Upload Your Dataset</h3>
                   <p>
-                    Simply drag and drop your CSV or Excel file. We support files up to 500MB with millions of rows.
+                    Simply drag and drop your CSV or Excel file. We support large files with millions of rows.
                     Our system instantly analyzes your data and provides a comprehensive quality assessment.
                   </p>
                 </div>
