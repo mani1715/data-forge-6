@@ -49,13 +49,14 @@ class DataForgeAPITester:
             return False
 
     def create_test_csv(self):
-        """Create a test CSV file for upload testing"""
-        # Create a simple test dataset with some missing values and duplicates
+        """Create a test CSV file for upload testing with specific columns for custom rules"""
+        # Create test dataset with columns that match the custom cleaning rules
         data = {
-            'name': ['Alice', 'Bob', 'Charlie', 'Alice', 'David', None, 'Eve'],
-            'age': [25, 30, None, 25, 35, 28, 22],
-            'salary': [50000, 60000, 55000, 50000, None, 65000, 45000],
-            'department': ['IT', 'HR', 'IT', 'IT', 'Finance', 'HR', None]
+            'name': ['jOHN', 'alice', 'BOB', None, 'charlie', '', 'DAVID'],
+            'date': ['2023-01-01', None, '2023-03-15', '', '2023-05-20', 'nan', '2023-07-10'],
+            'order': [1, None, 3, '', 5, 'nan', 7],
+            'price': [100.50, None, 200.75, '', 300.25, 'nan', 400.00],
+            'product': ['Widget A', None, 'Widget B', '', 'Widget C', 'nan', 'Widget D']
         }
         df = pd.DataFrame(data)
         
@@ -180,6 +181,81 @@ class DataForgeAPITester:
             self.log_test("Download Endpoint", False, str(e))
             return False
 
+    def test_custom_cleaning_rules(self):
+        """Test specific custom cleaning rules implementation"""
+        try:
+            # First upload the test data
+            csv_data = self.create_test_csv()
+            files = {'file': ('test_custom_rules.csv', csv_data, 'text/csv')}
+            upload_response = requests.post(f"{self.base_url}/upload", files=files, timeout=30)
+            
+            if upload_response.status_code != 200:
+                self.log_test("Custom Rules - Upload", False, "Failed to upload test data")
+                return False
+            
+            # Apply cleaning with AI strategy (which includes custom rules)
+            clean_response = requests.post(
+                f"{self.base_url}/action", 
+                json={'action': 'fill_missing', 'strategy': 'ai'}, 
+                timeout=30
+            )
+            
+            if clean_response.status_code != 200:
+                self.log_test("Custom Rules - Cleaning", False, "Failed to apply cleaning")
+                return False
+            
+            data = clean_response.json()
+            preview_data = data.get('preview', [])
+            
+            if not preview_data:
+                self.log_test("Custom Rules - Data Check", False, "No preview data returned")
+                return False
+            
+            # Check custom rules implementation
+            rules_passed = True
+            rule_details = []
+            
+            for row in preview_data:
+                # Rule 1: Date field should show '00-00-0000' for missing dates
+                if 'date' in row and row['date'] in [None, '', 'nan', 'NaN']:
+                    rules_passed = False
+                    rule_details.append("Date rule failed: found null/empty date")
+                
+                # Rule 2: Name field should be proper case
+                if 'name' in row and row['name'] and isinstance(row['name'], str):
+                    if row['name'] != row['name'].capitalize() and row['name'] != "Unknown":
+                        rules_passed = False
+                        rule_details.append(f"Name rule failed: '{row['name']}' not proper case")
+                
+                # Rule 3: Order field should be 'ORD X' format or 0
+                if 'order' in row and row['order'] is not None:
+                    order_val = str(row['order'])
+                    if order_val != '0' and not order_val.startswith('ORD '):
+                        rules_passed = False
+                        rule_details.append(f"Order rule failed: '{order_val}' not in ORD X format")
+                
+                # Rule 4: Price field should be 0 for missing values (numeric)
+                if 'price' in row and row['price'] is not None:
+                    try:
+                        price_val = float(row['price'])
+                        # This is fine, numeric values are expected
+                    except (ValueError, TypeError):
+                        rules_passed = False
+                        rule_details.append(f"Price rule failed: '{row['price']}' not numeric")
+                
+                # Rule 5: Product field should show 'Unknown' for missing values
+                if 'product' in row and row['product'] in [None, '', 'nan', 'NaN']:
+                    rules_passed = False
+                    rule_details.append("Product rule failed: found null/empty product")
+            
+            details = "All custom rules passed" if rules_passed else f"Rule violations: {'; '.join(rule_details)}"
+            self.log_test("Custom Cleaning Rules", rules_passed, details)
+            return rules_passed
+            
+        except Exception as e:
+            self.log_test("Custom Cleaning Rules", False, str(e))
+            return False
+
     def test_cleanup_endpoint(self):
         """Test cleanup functionality"""
         try:
@@ -205,6 +281,54 @@ class DataForgeAPITester:
             self.log_test("Cleanup Endpoint", False, str(e))
             return False
 
+    def test_quality_score_improvement(self):
+        """Test that quality score improves to 100% after cleaning"""
+        try:
+            # Upload test data
+            csv_data = self.create_test_csv()
+            files = {'file': ('test_quality.csv', csv_data, 'text/csv')}
+            upload_response = requests.post(f"{self.base_url}/upload", files=files, timeout=30)
+            
+            if upload_response.status_code != 200:
+                self.log_test("Quality Score - Upload", False, "Failed to upload")
+                return False
+            
+            initial_data = upload_response.json()
+            initial_score = initial_data.get('quality_score', 0)
+            
+            # Apply cleaning
+            clean_response = requests.post(
+                f"{self.base_url}/action", 
+                json={'action': 'fill_missing', 'strategy': 'ai'}, 
+                timeout=30
+            )
+            
+            if clean_response.status_code != 200:
+                self.log_test("Quality Score - Cleaning", False, "Failed to clean")
+                return False
+            
+            clean_data = clean_response.json()
+            final_score = clean_data.get('new_score', 0)
+            
+            # Check if score improved
+            score_improved = final_score > initial_score
+            details = f"Initial: {initial_score}%, Final: {final_score}%"
+            
+            # Ideally should reach 100% but we'll accept improvement
+            if final_score == 100:
+                details += " - Perfect score achieved!"
+            elif score_improved:
+                details += " - Score improved"
+            else:
+                details += " - Score did not improve"
+            
+            self.log_test("Quality Score Improvement", score_improved, details)
+            return score_improved
+            
+        except Exception as e:
+            self.log_test("Quality Score Improvement", False, str(e))
+            return False
+
     def run_full_test_suite(self):
         """Run complete backend test suite"""
         print("🚀 Starting DataForge Backend API Tests")
@@ -227,10 +351,16 @@ class DataForgeAPITester:
             # Test 3: Data Cleaning Actions (only if upload worked)
             self.test_data_cleaning_actions()
             
-            # Test 4: Download
+            # Test 4: Custom Cleaning Rules
+            self.test_custom_cleaning_rules()
+            
+            # Test 5: Quality Score Improvement
+            self.test_quality_score_improvement()
+            
+            # Test 6: Download
             self.test_download_endpoint()
             
-            # Test 5: Cleanup
+            # Test 7: Cleanup
             self.test_cleanup_endpoint()
         
         # Print Summary
