@@ -34,16 +34,22 @@ function App() {
     setDatasetName(file.name);
     try {
       const res = await api.post('/upload', formData);
-      setScore(res.data.quality_score);
-      setStats({ rows: res.data.summary.rows, columns: res.data.summary.columns, missing: res.data.summary.missing_values, duplicates: res.data.summary.duplicates || 0 });
-      setTableData(res.data.preview);
-      setChartData(res.data.chart_data);
+      // FRONTEND SAFETY - Use optional chaining and fallbacks
+      setScore(res?.data?.quality_score || 0);
+      setStats({ 
+        rows: res?.data?.summary?.rows || 0, 
+        columns: res?.data?.summary?.columns || 0, 
+        missing: res?.data?.summary?.missing_values || 0, 
+        duplicates: res?.data?.summary?.duplicates || 0 
+      });
+      setTableData(res?.data?.preview || []);
+      setChartData(res?.data?.chart_data || null);
       setIsUploaded(true);
       setShowLanding(false);
       setMessage('Dataset uploaded successfully!');
       setMessageType('success');
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      setMessage(`Error: ${err?.message || 'Upload failed'}`);
       setMessageType('error');
     } finally {
       setLoading(false);
@@ -54,20 +60,21 @@ function App() {
     setLoading(true);
     try {
       const res = await api.post('/action', { action: actionType, strategy: cleanStrategy });
-      setScore(res.data.new_score);
-      setTableData(res.data.preview);
-      setMessage(res.data.message);
-      setAiMessage(res.data.message);
+      // FRONTEND SAFETY - Use optional chaining and fallbacks
+      setScore(res?.data?.new_score || 0);
+      setTableData(res?.data?.preview || []);
+      setMessage(res?.data?.message || 'Action completed');
+      setAiMessage(res?.data?.message || '');
       setMessageType('success');
     } catch (err) {
-      setMessage(`Error: ${err.message}`);
+      setMessage(`Error: ${err?.message || 'Action failed'}`);
       setMessageType('error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDownload = () => window.open(`${process.env.REACT_APP_BACKEND_URL}/download`, '_blank');
+  const handleDownload = () => window.open(`${process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001/api'}/download`, '_blank');
   const handleReset = () => { setIsUploaded(false); setShowLanding(true); setDatasetName(''); setMessage(''); };
   const handleGetStarted = () => setShowLanding(false);
 
@@ -321,7 +328,7 @@ function App() {
             <DataTable data={tableData} />
             <CleaningControls strategy={cleanStrategy} setStrategy={setCleanStrategy} onAction={handleAction} loading={loading} aiMessage={aiMessage} />
           </main>
-          <aside><Visualization data={chartData} /></aside>
+          <aside className="right-panel"><Visualization data={chartData} /></aside>
         </div>
       )}
       

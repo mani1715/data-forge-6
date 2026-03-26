@@ -739,6 +739,54 @@ body {
   max-width: 1600px;
   margin: 0 auto;
   flex: 1;
+  align-items: start;
+}
+
+/* Main content area - scrollable */
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-track {
+  background: var(--slate-100);
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: 3px;
+}
+
+.main-content::-webkit-scrollbar-thumb:hover {
+  background: var(--slate-400);
+}
+
+/* Right panel - sticky graphs */
+.right-panel {
+  position: sticky;
+  top: 100px;
+  height: fit-content;
+  max-height: calc(100vh - 150px);
+  overflow-y: auto;
+}
+
+.right-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.right-panel::-webkit-scrollbar-thumb {
+  background: var(--slate-200);
+  border-radius: 2px;
 }
 
 .card {
@@ -992,6 +1040,9 @@ body {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  position: sticky;
+  top: 100px;
+  height: fit-content;
 }
 
 .chart-container {
