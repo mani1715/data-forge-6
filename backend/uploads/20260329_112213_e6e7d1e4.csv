@@ -1,0 +1,9 @@
+Age,City,ID,Name,Salary
+25,New York,1,John,50000
+,London,2,Jane,60000
+30,Paris,3,Bob,
+22,,4,Alice,45000
+25,New York,5,John,50000
+300,Berlin,6,Mike,120000
+28,Tokyo,7,Sarah,55000
+35,Sydney,8,,48000

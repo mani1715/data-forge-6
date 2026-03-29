@@ -1,0 +1,6 @@
+date,name,order,price,product
+2024-01-01,john doe,1,100,Laptop
+2024-01-02,JANE SMITH,2,50,Mouse
+,bob johnson,3,,Keyboard
+2024-01-04,,4,200,
+2024-01-05,alice BROWN,,0,Monitor

@@ -1,0 +1,9 @@
+Category,Date,Order ID,Price,Product Name,Quantity
+Electronics,2023-01-01,1,100.50,Laptop,2
+,13-13-2023,,0,MESSI,
+Clothing,2024/02/05,3,127.16,Messi!!,-1
+??,00-00-0000,Unknown,185.40,Unknown,0
+Unknown,,5,236.66,Messi,0
+Electronics,13-13-2023,Unknown,0,messi,-5
+Clothing,2023-01-01,ORD7,50.00,Messi#,3
+??,Invalid Date,Unknown,0,Unknown,0
