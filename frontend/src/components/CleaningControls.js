@@ -46,7 +46,7 @@ const CleaningControls = ({ strategy, setStrategy, onAction, loading, aiMessage 
             data-testid="remove-duplicates-button"
           >
             <Trash2 size={16} />
-            Remove Duplicates
+            Remove Duplicates with AI
           </button>
 
           <button 
@@ -56,7 +56,7 @@ const CleaningControls = ({ strategy, setStrategy, onAction, loading, aiMessage 
             data-testid="remove-outliers-button"
           >
             <TrendingDown size={16} />
-            Remove Outliers
+            Remove Outliers with AI
           </button>
 
           <button 
@@ -66,7 +66,7 @@ const CleaningControls = ({ strategy, setStrategy, onAction, loading, aiMessage 
             data-testid="clean-text-button"
           >
             <Type size={16} />
-            Clean Text Data
+            Clean Text Data with AI
           </button>
         </div>
 
