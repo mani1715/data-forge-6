@@ -5,9 +5,10 @@ import asyncio
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, KNNImputer
 
-# AI Integration with Gemini
+# AI Integration with Google Genai (new package)
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
@@ -177,98 +178,81 @@ class AIEngine:
         """
         Direct call to Gemini API for AI analysis.
         Uses GEMINI_API_KEY from environment.
+        Returns analysis or gracefully falls back if unavailable.
         """
         if not AI_AVAILABLE:
-            return "AI not available"
+            return None
         
         api_key = os.environ.get('GEMINI_API_KEY')
-        if not api_key:
-            return "Gemini API key not configured"
+        if not api_key or api_key == 'your-gemini-api-key-here':
+            return None
         
         try:
-            # Configure Gemini
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.0-flash-exp')
+            # Initialize client
+            client = genai.Client(api_key=api_key)
             
-            # Get AI response
-            response = model.generate_content(prompt)
+            # Generate content using latest model
+            response = client.models.generate_content(
+                model='gemini-2.0-flash-exp',
+                contents=prompt
+            )
+            
             return response.text
             
         except Exception as e:
-            return f"AI error: {str(e)[:100]}"
+            # Silently fail and return None - app will work without AI
+            return None
     
     @staticmethod
     def ai_analyze_data(df, analysis_type="general"):
         """
         Use Gemini AI to analyze data for specific cleaning needs.
+        Gracefully falls back if AI is unavailable.
         analysis_type: 'duplicates', 'outliers', 'missing', 'text'
         """
         try:
-            # Prepare data summary for AI
-            summary = {
-                'rows': len(df),
-                'columns': list(df.columns),
-                'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()},
-                'missing': df.isnull().sum().to_dict(),
-                'sample': df.head(10).to_dict()
-            }
-            
+            # Build concise prompts for each analysis type
             if analysis_type == 'duplicates':
                 duplicates = df.duplicated().sum()
-                prompt = f"""Analyze this dataset for duplicate detection:
+                if duplicates == 0:
+                    return "No duplicate rows detected"
                 
-Dataset: {len(df)} rows, {len(df.columns)} columns
-Columns: {list(df.columns)}
-Duplicates found: {duplicates}
-Sample data: {df.head(5).to_dict()}
-
-Provide a brief analysis (max 2 sentences) about the duplicate patterns found."""
+                prompt = f"Dataset has {duplicates} duplicate rows out of {len(df)} total. Briefly explain impact (max 20 words)."
             
             elif analysis_type == 'outliers':
                 numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
-                stats = {}
-                for col in numeric_cols:
-                    stats[col] = {
-                        'mean': float(df[col].mean()),
-                        'std': float(df[col].std()),
-                        'min': float(df[col].min()),
-                        'max': float(df[col].max())
-                    }
+                if not numeric_cols:
+                    return "No numeric columns for outlier detection"
                 
-                prompt = f"""Analyze this dataset for outlier detection:
-                
-Numeric columns: {numeric_cols}
-Statistics: {stats}
-
-Provide a brief analysis (max 2 sentences) about potential outliers."""
+                prompt = f"Analyzing {len(numeric_cols)} numeric columns for outliers. Briefly describe outlier impact (max 20 words)."
             
             elif analysis_type == 'text':
                 text_cols = df.select_dtypes(include=['object']).columns.tolist()
-                unique_counts = {col: df[col].nunique() for col in text_cols}
+                if not text_cols:
+                    return "No text columns found"
                 
-                prompt = f"""Analyze this dataset for text cleaning:
-                
-Text columns: {text_cols}
-Unique values per column: {unique_counts}
-Missing values: {df[text_cols].isnull().sum().to_dict() if text_cols else {}}
-
-Provide a brief analysis (max 2 sentences) about text data quality."""
+                missing_count = sum(df[col].isnull().sum() for col in text_cols)
+                prompt = f"Found {missing_count} missing values in {len(text_cols)} text columns. Briefly suggest strategy (max 20 words)."
             
             else:  # missing values
-                prompt = f"""Analyze this dataset for missing value imputation:
+                total_missing = df.isnull().sum().sum()
+                if total_missing == 0:
+                    return "No missing values detected"
                 
-Missing values per column: {summary['missing']}
-Column types: {summary['dtypes']}
-Sample data: {summary['sample']}
-
-Provide brief recommendations (max 2 sentences) for handling missing values."""
+                prompt = f"Dataset has {total_missing} missing values. Briefly recommend imputation strategy (max 20 words)."
             
             # Get AI response
             ai_response = AIEngine.call_gemini_ai(prompt)
-            return ai_response
+            
+            # If AI fails, return a simple message
+            if not ai_response:
+                return f"Standard {analysis_type} cleaning applied"
+            
+            return ai_response[:200]  # Limit response length
             
         except Exception as e:
-            return f"Analysis: Standard {analysis_type} detection applied"
+            # Gracefully fall back
+            return f"Standard {analysis_type} cleaning applied"
     
     # ==========================================
     # EXISTING CLEANING METHODS
