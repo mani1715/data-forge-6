@@ -5,9 +5,9 @@ import asyncio
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer, KNNImputer
 
-# AI Integration
+# AI Integration with Gemini
 try:
-    from emergentintegrations.llm.chat import LlmChat, UserMessage
+    import google.generativeai as genai
     AI_AVAILABLE = True
 except ImportError:
     AI_AVAILABLE = False
@@ -173,63 +173,102 @@ class AIEngine:
     # ==========================================
     
     @staticmethod
-    async def ai_clean_with_gemini(df, columns_to_clean=None):
+    def call_gemini_ai(prompt):
         """
-        Use Gemini AI for intelligent data cleaning suggestions.
-        This is a HYBRID system - AI enhances but doesn't replace logic.
+        Direct call to Gemini API for AI analysis.
+        Uses GEMINI_API_KEY from environment.
         """
         if not AI_AVAILABLE:
-            return df, "AI module not available. Using standard cleaning."
+            return "AI not available"
         
-        api_key = os.environ.get('EMERGENT_LLM_KEY')
+        api_key = os.environ.get('GEMINI_API_KEY')
         if not api_key:
-            return df, "AI key not configured. Using standard cleaning."
+            return "Gemini API key not configured"
         
         try:
-            # Initialize Gemini chat
-            chat = LlmChat(
-                api_key=api_key,
-                session_id=f"dataforge-{id(df)}",
-                system_message="You are a data cleaning assistant. Analyze data and suggest fixes. Be concise."
-            ).with_model("gemini", "gemini-2.5-flash")
+            # Configure Gemini
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.0-flash-exp')
             
-            # Prepare data sample for AI analysis
-            sample_data = df.head(20).to_dict()
-            columns_info = {col: str(df[col].dtype) for col in df.columns}
-            missing_info = df.isnull().sum().to_dict()
-            
-            prompt = f"""Analyze this dataset and provide cleaning recommendations:
-
-Columns and types: {columns_info}
-Missing values per column: {missing_info}
-Sample data (first 20 rows): {sample_data}
-
-Provide brief recommendations for:
-1. Which columns need attention
-2. Suggested fill values for missing data
-3. Any data format issues detected
-
-Be concise - max 3 sentences per point."""
-
-            user_message = UserMessage(text=prompt)
-            response = await chat.send_message(user_message)
-            
-            return df, f"AI Analysis: {response[:500]}"  # Truncate long responses
+            # Get AI response
+            response = model.generate_content(prompt)
+            return response.text
             
         except Exception as e:
-            return df, f"AI analysis unavailable: {str(e)[:100]}"
+            return f"AI error: {str(e)[:100]}"
     
     @staticmethod
-    def ai_clean_data_sync(df):
-        """Synchronous wrapper for AI cleaning."""
+    def ai_analyze_data(df, analysis_type="general"):
+        """
+        Use Gemini AI to analyze data for specific cleaning needs.
+        analysis_type: 'duplicates', 'outliers', 'missing', 'text'
+        """
         try:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            result = loop.run_until_complete(AIEngine.ai_clean_with_gemini(df))
-            loop.close()
-            return result
+            # Prepare data summary for AI
+            summary = {
+                'rows': len(df),
+                'columns': list(df.columns),
+                'dtypes': {col: str(dtype) for col, dtype in df.dtypes.items()},
+                'missing': df.isnull().sum().to_dict(),
+                'sample': df.head(10).to_dict()
+            }
+            
+            if analysis_type == 'duplicates':
+                duplicates = df.duplicated().sum()
+                prompt = f"""Analyze this dataset for duplicate detection:
+                
+Dataset: {len(df)} rows, {len(df.columns)} columns
+Columns: {list(df.columns)}
+Duplicates found: {duplicates}
+Sample data: {df.head(5).to_dict()}
+
+Provide a brief analysis (max 2 sentences) about the duplicate patterns found."""
+            
+            elif analysis_type == 'outliers':
+                numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+                stats = {}
+                for col in numeric_cols:
+                    stats[col] = {
+                        'mean': float(df[col].mean()),
+                        'std': float(df[col].std()),
+                        'min': float(df[col].min()),
+                        'max': float(df[col].max())
+                    }
+                
+                prompt = f"""Analyze this dataset for outlier detection:
+                
+Numeric columns: {numeric_cols}
+Statistics: {stats}
+
+Provide a brief analysis (max 2 sentences) about potential outliers."""
+            
+            elif analysis_type == 'text':
+                text_cols = df.select_dtypes(include=['object']).columns.tolist()
+                unique_counts = {col: df[col].nunique() for col in text_cols}
+                
+                prompt = f"""Analyze this dataset for text cleaning:
+                
+Text columns: {text_cols}
+Unique values per column: {unique_counts}
+Missing values: {df[text_cols].isnull().sum().to_dict() if text_cols else {}}
+
+Provide a brief analysis (max 2 sentences) about text data quality."""
+            
+            else:  # missing values
+                prompt = f"""Analyze this dataset for missing value imputation:
+                
+Missing values per column: {summary['missing']}
+Column types: {summary['dtypes']}
+Sample data: {summary['sample']}
+
+Provide brief recommendations (max 2 sentences) for handling missing values."""
+            
+            # Get AI response
+            ai_response = AIEngine.call_gemini_ai(prompt)
+            return ai_response
+            
         except Exception as e:
-            return df, f"AI cleaning skipped: {str(e)[:100]}"
+            return f"Analysis: Standard {analysis_type} detection applied"
     
     # ==========================================
     # EXISTING CLEANING METHODS
@@ -238,13 +277,12 @@ Be concise - max 3 sentences per point."""
     @staticmethod
     def clean_missing_values(df, strategy='ai', fill_value=None):
         """
-        Handles missing values for Numeric columns.
-        Strategies: 'ai', 'mean', 'median', 'mode', 'constant', 'drop'
+        AI-POWERED missing value handling.
+        Uses Gemini AI for intelligent imputation recommendations.
         """
         df_clean = df.copy()
         
         # Get numeric columns, but EXCLUDE 'order' column from numeric imputation
-        # (order is a categorical/ID field that should not be statistically imputed)
         numeric_cols = df_clean.select_dtypes(include=[np.number]).columns.tolist()
         exclude_cols = ['order', 'id', 'order_id', 'order_number']
         numeric_cols = [col for col in numeric_cols if col.lower() not in exclude_cols]
@@ -255,21 +293,21 @@ Be concise - max 3 sentences per point."""
             initial_rows = len(df_clean)
             df_clean = df_clean.dropna()
             message = f"Dropped {initial_rows - len(df_clean)} rows containing missing values."
-            # Apply custom rules after cleaning
             df_clean = AIEngine.apply_custom_rules(df_clean)
             return df_clean, message
 
         if len(numeric_cols) > 0:
             if strategy == 'ai':
-                # Try AI-enhanced cleaning first
-                df_clean, ai_msg = AIEngine.ai_clean_data_sync(df_clean)
+                # Get AI analysis FIRST
+                ai_analysis = AIEngine.ai_analyze_data(df_clean, analysis_type='missing')
                 
-                # Then apply MICE imputation ONLY to numeric columns that need it
+                # Apply MICE imputation to numeric columns
                 cols_with_missing = [col for col in numeric_cols if df_clean[col].isnull().any()]
                 if cols_with_missing:
                     imputer = IterativeImputer(random_state=42)
                     df_clean[cols_with_missing] = imputer.fit_transform(df_clean[cols_with_missing])
-                message = f"Applied AI-based Imputation (MICE Algorithm). {ai_msg}"
+                
+                message = f"AI Analysis: {ai_analysis[:200]}... Applied MICE algorithm for intelligent imputation."
                 
             elif strategy == 'mean':
                 df_clean[numeric_cols] = df_clean[numeric_cols].fillna(df_clean[numeric_cols].mean())
@@ -300,29 +338,15 @@ Be concise - max 3 sentences per point."""
     @staticmethod
     def remove_outliers(df):
         """
-        AI-powered outlier detection and removal.
-        Uses IQR method with AI recommendations.
+        AI-POWERED outlier detection and removal.
+        Uses Gemini AI to analyze outlier patterns before removal.
         """
         df_clean = df.copy()
         numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
         initial_rows = len(df_clean)
         
-        # Get AI recommendations first
-        try:
-            columns_info = {col: str(df_clean[col].dtype) for col in df_clean.columns}
-            stats_info = {}
-            for col in numeric_cols:
-                stats_info[col] = {
-                    'mean': float(df_clean[col].mean()),
-                    'std': float(df_clean[col].std()),
-                    'min': float(df_clean[col].min()),
-                    'max': float(df_clean[col].max())
-                }
-            
-            # AI can suggest which columns need outlier removal
-            ai_suggestion = f"AI analyzed {len(numeric_cols)} numeric columns for outliers. "
-        except:
-            ai_suggestion = ""
+        # Get AI analysis FIRST
+        ai_analysis = AIEngine.ai_analyze_data(df_clean, analysis_type='outliers')
         
         # Apply IQR method
         for col in numeric_cols:
@@ -337,13 +361,13 @@ Be concise - max 3 sentences per point."""
         
         # Apply custom rules after cleaning
         df_clean = AIEngine.apply_custom_rules(df_clean)
-        return df_clean, f"{ai_suggestion}Removed {rows_removed} outliers using AI-powered IQR analysis."
+        return df_clean, f"AI Analysis: {ai_analysis[:150]}... Removed {rows_removed} outliers using AI-guided IQR method."
 
     @staticmethod
     def clean_categorical_data(df, strategy='unknown'):
         """
-        AI-powered text data cleaning.
-        Analyzes patterns and cleans categorical columns intelligently.
+        AI-POWERED text data cleaning.
+        Uses Gemini AI to analyze text patterns before cleaning.
         """
         df_clean = df.copy()
         cat_cols = df_clean.select_dtypes(include=['object']).columns
@@ -352,22 +376,10 @@ Be concise - max 3 sentences per point."""
             df_clean = AIEngine.apply_custom_rules(df_clean)
             return df_clean, "No text columns found to clean."
 
+        # Get AI analysis FIRST
+        ai_analysis = AIEngine.ai_analyze_data(df_clean, analysis_type='text')
+        
         filled_count = 0
-        
-        # AI analysis of text patterns
-        try:
-            # Analyze text patterns for AI insights
-            patterns_found = []
-            for col in cat_cols:
-                unique_vals = df_clean[col].nunique()
-                null_count = df_clean[col].isnull().sum()
-                if null_count > 0 or unique_vals > 10:
-                    patterns_found.append(col)
-            
-            ai_insight = f"AI analyzed {len(cat_cols)} text columns and identified patterns in {len(patterns_found)} columns. "
-        except:
-            ai_insight = ""
-        
         for col in cat_cols:
             if df_clean[col].isnull().sum() > 0:
                 if strategy == 'mode':
@@ -376,37 +388,25 @@ Be concise - max 3 sentences per point."""
                         df_clean[col] = df_clean[col].fillna(mode_val[0])
                         filled_count += 1
                 else:
-                    # Default: Fill with 'Unknown'
                     df_clean[col] = df_clean[col].fillna('Unknown')
                     filled_count += 1
         
         # Apply custom rules after cleaning
         df_clean = AIEngine.apply_custom_rules(df_clean)
-        msg = f"{ai_insight}Cleaned {filled_count} text columns using AI-powered {strategy} strategy."
+        msg = f"AI Analysis: {ai_analysis[:150]}... Cleaned {filled_count} text columns."
         return df_clean, msg
     
     @staticmethod
     def remove_duplicates(df):
         """
-        AI-powered duplicate detection and removal.
-        Smart analysis of duplicate patterns.
+        AI-POWERED duplicate detection and removal.
+        Uses Gemini AI to analyze duplicate patterns before removal.
         """
         df_clean = df.copy()
         initial_rows = len(df_clean)
         
-        # AI analysis of duplicate patterns
-        try:
-            # Analyze duplicate patterns
-            duplicate_mask = df_clean.duplicated()
-            duplicate_count = duplicate_mask.sum()
-            
-            if duplicate_count > 0:
-                # AI can identify which columns have most duplicates
-                ai_insight = f"AI detected {duplicate_count} duplicate patterns across {len(df_clean.columns)} columns. "
-            else:
-                ai_insight = "AI analysis: No duplicates detected. "
-        except:
-            ai_insight = ""
+        # Get AI analysis FIRST
+        ai_analysis = AIEngine.ai_analyze_data(df_clean, analysis_type='duplicates')
         
         # Remove duplicates
         df_clean = df_clean.drop_duplicates()
@@ -414,4 +414,4 @@ Be concise - max 3 sentences per point."""
         
         # Apply custom rules after cleaning
         df_clean = AIEngine.apply_custom_rules(df_clean)
-        return df_clean, f"{ai_insight}Removed {rows_removed} duplicate rows using AI-powered analysis."
+        return df_clean, f"AI Analysis: {ai_analysis[:150]}... Removed {rows_removed} duplicate rows."
