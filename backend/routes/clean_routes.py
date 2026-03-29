@@ -49,7 +49,7 @@ def perform_action():
         return jsonify({
             'message': message,
             'new_score': new_score,
-            'preview': cleaned_df.head(20).fillna("NaN").to_dict(orient='records')
+            'preview': cleaned_df.head(20).to_dict(orient='records')  # No fillna - data already clean
         })
 
     except Exception as e:

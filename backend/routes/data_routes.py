@@ -126,7 +126,10 @@ def download_file():
     global CURRENT_DF
     
     if CURRENT_DF is None:
-        return jsonify({'error': 'No dataset available for download'}), 400
+        return jsonify({
+            'error': 'No dataset available for download',
+            'help': 'Please upload a file first, then optionally clean it, then download.'
+        }), 400
     
     try:
         # Create a CSV in memory
@@ -141,7 +144,7 @@ def download_file():
             download_name='cleaned_data.csv'
         )
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': f'Download failed: {str(e)}'}), 500
 
 
 @data_bp.route('/cleanup', methods=['POST'])
