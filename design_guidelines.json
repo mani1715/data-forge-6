@@ -1,0 +1,133 @@
+{
+  "theme": "light",
+  "typography": {
+    "fonts_to_import": [
+      "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+    ],
+    "headings": {
+      "fontFamily": "'IBM Plex Sans', sans-serif",
+      "weights": ["400", "600", "700"],
+      "classes": "font-sans tracking-tight text-slate-900"
+    },
+    "body": {
+      "fontFamily": "'Inter', sans-serif",
+      "classes": "font-sans text-slate-600 leading-relaxed tracking-normal"
+    },
+    "upload_zone_branding": {
+      "fontFamily": "'Playfair Display', serif",
+      "classes": "font-serif tracking-tight"
+    }
+  },
+  "colors": {
+    "background": {
+      "primary": "bg-slate-50",
+      "secondary": "bg-white",
+      "tertiary": "bg-slate-100"
+    },
+    "text": {
+      "primary": "text-slate-900",
+      "secondary": "text-slate-600",
+      "tertiary": "text-slate-500",
+      "inverse": "text-white"
+    },
+    "brand": {
+      "primary": "bg-[#D90429]",
+      "primary_hover": "bg-[#EF233C]",
+      "primary_text": "text-[#D90429]"
+    },
+    "accents": {
+      "border": "border-slate-200",
+      "border_hover": "border-slate-300",
+      "success": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "warning": "bg-amber-50 text-amber-700 border-amber-200",
+      "error": "bg-red-50 text-red-700 border-red-200"
+    }
+  },
+  "visual_enhancers": {
+    "shadows": {
+      "sm": "shadow-sm",
+      "md": "shadow-md shadow-slate-200/50",
+      "lg": "shadow-lg shadow-slate-200/50",
+      "glass": "shadow-[0_8px_32px_rgba(0,0,0,0.04)]"
+    },
+    "borders": {
+      "radius": "rounded-lg",
+      "width": "border",
+      "style": "border-solid"
+    },
+    "effects": {
+      "glass": "bg-white/80 backdrop-blur-md border border-white/40 shadow-sm",
+      "neumorphism": "bg-slate-50 shadow-[4px_4px_10px_rgba(0,0,0,0.05),-4px_-4px_10px_rgba(255,255,255,0.8)] border border-white/20"
+    }
+  },
+  "layouts": {
+    "spacing": "p-8 md:p-12 lg:p-16",
+    "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "grid_bento": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+    "hero": "min-h-[80vh] flex flex-col items-start justify-center text-left px-4 md:px-8"
+  },
+  "motion": {
+    "hover": "transition-colors duration-200 ease-in-out",
+    "transform_hover": "transition-transform duration-200 ease-in-out hover:-translate-y-1",
+    "active": "active:scale-[0.98]",
+    "entrance": "animate-in fade-in slide-in-from-bottom-4 duration-500",
+    "staggered_list": "transition-all duration-300 ease-out"
+  },
+  "components": {
+    "button": {
+      "primary": "inline-flex items-center justify-center px-6 py-2.5 rounded-md font-medium text-white bg-[#D90429] hover:bg-[#EF233C] transition-colors shadow-sm active:scale-[0.98] focus:ring-2 focus:ring-[#D90429]/50 focus:outline-none",
+      "secondary": "inline-flex items-center justify-center px-6 py-2.5 rounded-md font-medium text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 transition-colors active:scale-[0.98] focus:ring-2 focus:ring-slate-200 focus:outline-none",
+      "ghost": "inline-flex items-center justify-center px-4 py-2 rounded-md font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors focus:ring-2 focus:ring-slate-200 focus:outline-none"
+    },
+    "card": {
+      "base": "bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden",
+      "hover": "hover:shadow-md hover:border-slate-300 transition-all duration-200 hover:-translate-y-1"
+    },
+    "upload_zone": {
+      "base": "relative w-full border-2 border-dashed border-slate-300 rounded-2xl p-12 lg:p-24 flex flex-col items-center justify-center bg-slate-50/50 hover:bg-slate-50 transition-colors group cursor-pointer",
+      "active": "border-[#D90429] bg-red-50/30",
+      "text_container": "text-center space-y-4 pointer-events-none",
+      "branding_text_1": "font-serif text-5xl md:text-6xl font-bold tracking-tight text-slate-900",
+      "branding_text_2": "font-serif text-xl md:text-2xl italic text-slate-500"
+    }
+  },
+  "media": {
+    "image_urls": {
+      "hero_background": "https://images.unsplash.com/photo-1762279388957-c6ed514d3353?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwyfHxkYXRhJTIwdmlzdWFsaXphdGlvbiUyMGFic3RyYWN0fGVufDB8fHx8MTc3NDQwODgyN3ww&ixlib=rb-4.1.0&q=85",
+      "logo": "/logo.png"
+    }
+  },
+  "accessibility": {
+    "focus_states": "All interactive elements must have clear focus rings.",
+    "contrast": "Text over backgrounds must meet WCAG AA standards. Use text-shadow if placed over an image."
+  },
+  "instructions_to_main_agent": [
+    "IMPORT GOOGLE FONTS: Add the provided Google Fonts link to the public/index.html <head> so 'IBM Plex Sans', 'Inter', and 'Playfair Display' load correctly.",
+    "CUSTOMIZE TAILWIND: Update tailwind.config.js to include the custom font families: sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'], heading: ['IBM Plex Sans', 'sans-serif'].",
+    "COMPLETELY REMOVE all existing purple/indigo color classes from the app. Use the defined high-contrast Swiss professional theme: Slate backgrounds, crisp white cards, and the brand RED (#D90429) for primary actions.",
+    "LOGO: The logo is already at /logo.png. Use it in the header and anywhere a brand mark is needed. Ensure the brand color ties perfectly with this red.",
+    "UPLOAD ZONE BRANDING: In the file upload area, you MUST use the serif font (`font-serif`) for the exact text 'DATA FORGE' and 'YOUR DATA, PERFECTED.'. Make 'DATA FORGE' large and bold, and 'YOUR DATA, PERFECTED.' slightly smaller and italicized.",
+    "LAYOUT & BENTO GRID: Implement a clean, structural BENTO GRID for the dashboard instead of generic centered layouts.",
+    "HEADER: Apply 'Glassmorphism' (`bg-white/80 backdrop-blur-md border-b border-slate-200`) to the sticky header. Ensure it does NOT use a complete transparent background.",
+    "HERO SECTION: For the Landing Page hero, create a massive, high-contrast typography section. 'DATA FORGE' should be huge. Do not center everything generically—use a strong 12-column grid layout where the text spans 8 columns.",
+    "ANIMATIONS: Add hover animations to all buttons and cards. Cards should lift slightly (`-translate-y-1`) with a deeper shadow (`shadow-md`).",
+    "ICONS: Use Lucide React for clean, professional iconography. Avoid emojis completely.",
+    "DATA VISUALIZATION: Make sure the data quality score and charts use professional colors (e.g., Slate, Emerald for good, Amber for warnings, Red for errors). Use `recharts` for the interactive charts, styled to match the clean aesthetic.",
+    "TESTING: Add `data-testid` to all interactive and key informational elements."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "Do not converge toward generic, 'on distribution' outputs. Avoid the 'AI slop' aesthetic.",
+    "Do not use dark colors as gradients.",
+    "Do not make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (e.g., transition: all). Add transitions for specific interactive elements.",
+    "You MUST NOT center align the app container. Do not add `.App { text-align: center; }` in the css file.",
+    "Always use modern button styles.",
+    "NEVER use AI assistant Emoji characters.",
+    "Every interaction needs micro-animations - hover states, transitions, parallax effects, and entrance animations.",
+    "Use generous spacing (2-3x more than feels comfortable).",
+    "Use subtle grain textures or noise overlays where appropriate.",
+    "All interactive and key informational elements MUST include a `data-testid` attribute."
+  ]
+}
